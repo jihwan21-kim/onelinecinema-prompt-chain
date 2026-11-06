@@ -2,7 +2,7 @@ import { NextRequest,NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 export async function POST(req:NextRequest){try{
- const jar=await cookies();const db=createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,{cookies:{getAll(){return jar.getAll()},setAll(values){values.forEach(({name,value,options})=>jar.set(name,value,options))}}});
+ const jar=await cookies();const db=createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!,process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,{cookies:{getAll(){return jar.getAll()},setAll(values: {name: string; value: string; options?: Parameters<typeof jar.set>[2]}[]){values.forEach(({name,value,options})=>jar.set(name,value,options))}}});
  const {data:{user}}=await db.auth.getUser();if(!user)return NextResponse.json({error:'Sign in required'}, {status:401});const {data:admin,error:roleError}=await db.rpc('prompt_tool_is_admin');if(roleError||!admin)return NextResponse.json({error:'Admin only'}, {status:403});
  const {chainId,input}=await req.json();if(typeof chainId!=='string'||typeof input!=='string'||input.length>20000)return NextResponse.json({error:'Invalid input'}, {status:400});
  const {data:chain}=await db.from('prompt_tool_chains').select('id').eq('id',chainId).single();if(!chain)return NextResponse.json({error:'Chain not found'}, {status:404});
